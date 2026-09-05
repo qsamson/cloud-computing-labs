@@ -2,15 +2,15 @@
 
 ## Root User MFA Enabled
 
-![Root User MFA Enabled](screenshots/step01-pic1.png)
+![Root User MFA Enabled](step01-pic1.png)
 
 ## IAM User Created
 
-![IAM Users List](screenshots/step01-pic2.png)
+![IAM Users List](step01-pic2.png)
 
 ## IAM User MFA Enabled
 
-![IAM User MFA Enabled](screenshots/step01-pic3.png)
+![IAM User MFA Enabled](step01-pic3.png)
 
 ## Access Key Confirmation
 

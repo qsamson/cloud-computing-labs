@@ -1,4 +1,4 @@
-# Step 01 — AWS Account, IAM User, MFA, and Access Keys
+# Step 01 : AWS Account, IAM User, MFA, and Access Keys
 
 ## Root User MFA Enabled
 
@@ -24,7 +24,7 @@ Root user MFA is important because the root account has unrestricted access to a
 
 ---
 
-# Step 02 — Docker and Ubuntu Linux Container Setup
+# Step 02 : Docker and Ubuntu Linux Container Setup
 
 ## Docker Version
 
@@ -49,3 +49,28 @@ Root user MFA is important because the root account has unrestricted access to a
 ## Docker Image vs. Docker Container
 
 A Docker image is like a blueprint or template that contains the files and software needed to create a container. The image itself does not run; it is used to create containers. A Docker container is an actual running or stopped instance created from that image. Containers are lightweight and isolated from the main operating system, which makes them useful for running applications consistently on different computers.
+
+
+---
+
+# Step 03 : AWS CLI and GitHub Configuration Inside Docker
+
+## AWS CLI Version
+
+![AWS CLI Version](step03-pic1.png)
+
+## AWS IAM Authentication
+
+![AWS IAM Caller Identity](step03-pic2.png)
+
+## Git Configuration
+
+![Git Global Configuration](step03-pic3.png)
+
+## GitHub Repository
+
+![GitHub Repository Showing list_buckets.sh](step03-pic4.png)
+
+## Security Reflection
+
+AWS credentials and GitHub tokens should never be committed to a repository because they are sensitive credentials that can give someone access to your cloud account or GitHub resources. If they are exposed, another person could use them to access services, modify or delete resources, or make unauthorized changes. Even in a private repository, credentials can still be accidentally shared or exposed, so they should always be stored securely and kept separate from source code.

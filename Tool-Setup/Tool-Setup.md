@@ -16,7 +16,7 @@
 
 Access key successfully created for the IAM lab user.
 
-**Access Key:** `AKIA****…**** (AKIAW24GPJVZJ3R5XXXX)
+**Access Key:(AKIAW24GPJVZJ3R5XXXX)
 
 ## Security Reflection
 

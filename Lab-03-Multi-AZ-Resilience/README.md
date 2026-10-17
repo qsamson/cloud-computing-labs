@@ -1,4 +1,4 @@
-# Lab 03 — Multi-AZ Resilience
+# Lab 03: Multi-AZ Resilience
 
 ## Overview
 
@@ -40,7 +40,7 @@ Both the uploader and viewer target groups showed their EC2 instances as `health
 
 ---
 
-## 4. Recovery Test — PASS
+## 4. Recovery Test: PASS
 
 I ran the chaos test on the uploader with a recovery SLO of **180 seconds**.
 
@@ -60,7 +60,7 @@ CSV log:
 
 ---
 
-## 5. Recovery Test — FAIL
+## 5. Recovery Test: FAIL
 
 I ran the uploader test again, but this time I changed the SLO to **60 seconds**.
 
@@ -136,6 +136,6 @@ The final checks showed that no lab Auto Scaling Groups or running EC2 instances
 
 The recovery test CSV files are stored in the `csv` folder:
 
-- [Uploader PASS — 82.2 seconds](csv/chaos_test_uploader_10761.csv)
-- [Uploader FAIL — 82.6 seconds](csv/chaos_test_uploader_11385.csv)
-- [Viewer PASS — 79.4 seconds](csv/chaos_test_viewer_12033.csv)
+- [Uploader PASS: 82.2 seconds](csv/chaos_test_uploader_10761.csv)
+- [Uploader FAIL: 82.6 seconds](csv/chaos_test_uploader_11385.csv)
+- [Viewer PASS: 79.4 seconds](csv/chaos_test_viewer_12033.csv)

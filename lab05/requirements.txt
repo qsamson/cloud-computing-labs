@@ -1,0 +1,4 @@
+boto3>=1.34
+requests>=2.31
+pytest>=8.0
+moto[ec2,elbv2,autoscaling,iam,s3]>=5.0

@@ -1,5 +1,4 @@
-```markdown
-# Lab 05 — Infrastructure as Python with boto3 and pytest
+# Lab 05 - Infrastructure as Python with boto3 and pytest
 
 ## Overview
 
@@ -13,15 +12,15 @@ Pytest was used for unit, integration, and chaos testing.
 
 The project contains:
 
-- `stack/` — Python infrastructure modules
-- `tests/unit/` — unit tests
-- `tests/integration/` — integration and chaos tests
-- `uploader-app/` — uploader application
-- `viewer-app/` — viewer application
-- `create_stack.py` — creates the AWS stack
-- `delete_stack.py` — removes the AWS stack
-- `pytest.ini` — pytest configuration
-- `requirements.txt` — Python dependencies
+- `stack/` - Python infrastructure modules
+- `tests/unit/` - unit tests
+- `tests/integration/` - integration and chaos tests
+- `uploader-app/` - uploader application
+- `viewer-app/` - viewer application
+- `create_stack.py` - creates the AWS stack
+- `delete_stack.py` - removes the AWS stack
+- `pytest.ini` - pytest configuration
+- `requirements.txt` - Python dependencies
 
 ### Evidence
 
@@ -135,9 +134,8 @@ The Python approach therefore provides better error handling because expected er
 
 ---
 
-## Challenge 5 — Reflection
+## Challenge 5 - Reflection
 
 The Bash version was shorter when handling AWS commands that might fail because it could simply use commands such as `2>/dev/null || true`.
 
 The Python version required more lines, but those extra lines provided clearer error handling, better testing, and more control over which failures should be ignored and which should stop the program.
-```

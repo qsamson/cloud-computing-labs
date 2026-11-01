@@ -1,0 +1,9 @@
+{
+  "name": "advisor-app",
+  "version": "1.0.0",
+  "main": "app.js",
+  "dependencies": {
+    "express": "^4.19.2",
+    "@aws-sdk/client-ssm": "^3.600.0"
+  }
+}

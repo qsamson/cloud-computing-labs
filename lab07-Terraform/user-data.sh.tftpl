@@ -1,0 +1,35 @@
+#!/bin/bash
+dnf update -y
+dnf install -y nodejs
+mkdir -p /opt/app
+
+echo "${app_js_b64}" | base64 -d > /opt/app/app.js
+echo "${package_json_b64}" | base64 -d > /opt/app/package.json
+
+cd /opt/app
+npm install --omit=dev
+
+cat > /etc/systemd/system/${service_name}.service << 'SERVICE'
+[Unit]
+Description=${service_name} app
+After=network.target
+
+[Service]
+Environment=PORT=3000
+Environment=AWS_REGION=${region}
+%{ for name, value in environment ~}
+Environment="${name}=${value}"
+%{ endfor ~}
+WorkingDirectory=/opt/app
+ExecStart=/usr/bin/node /opt/app/app.js
+Restart=always
+User=ec2-user
+
+[Install]
+WantedBy=multi-user.target
+SERVICE
+
+chown -R ec2-user:ec2-user /opt/app
+systemctl daemon-reload
+systemctl enable ${service_name}.service
+systemctl start ${service_name}.service

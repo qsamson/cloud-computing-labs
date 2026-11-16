@@ -1,0 +1,29 @@
+.terraform/
+*.tfstate
+*.tfstate.*
+tfplan
+terraform.tfvars
+*.pem
+
+# Python
+.venv/
+venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+
+# Node
+node_modules/
+
+# Terraform
+.terraform/
+*.tfstate
+*.tfstate.*
+terraform.tfvars
+tfplan
+*.tfplan
+crash.log
+
+# Secrets / keys
+*.pem
+.env

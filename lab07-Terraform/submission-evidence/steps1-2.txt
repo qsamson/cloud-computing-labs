@@ -1,0 +1,54 @@
+=== LAB06 INFRASTRUCTURE LINES ===
+3081
+=== LAB06 CODE LINES ===
+2501
+=== TERRAFORM ALL LINES ===
+418
+=== TERRAFORM CODE LINES ===
+349
+=== LAB06 DELETE-SCRIPT LINES ===
+100
+=== TERRAFORM STATE ===
+data.aws_ami.al2023
+data.aws_iam_policy_document.advisor
+data.aws_iam_policy_document.ec2_trust
+data.aws_iam_policy_document.weather
+data.aws_subnets.default
+data.aws_vpc.default
+aws_autoscaling_group.tier["advisor"]
+aws_autoscaling_group.tier["weather"]
+aws_dynamodb_table.weather
+aws_iam_instance_profile.tier["advisor"]
+aws_iam_instance_profile.tier["weather"]
+aws_iam_role.tier["advisor"]
+aws_iam_role.tier["weather"]
+aws_iam_role_policy.advisor
+aws_iam_role_policy.weather
+aws_launch_template.tier["advisor"]
+aws_launch_template.tier["weather"]
+aws_lb.main
+aws_lb_listener.tier["advisor"]
+aws_lb_listener.tier["weather"]
+aws_lb_target_group.tier["advisor"]
+aws_lb_target_group.tier["weather"]
+aws_security_group.alb
+aws_security_group.app
+aws_ssm_parameter.gemini
+aws_vpc_security_group_egress_rule.alb_to_app
+aws_vpc_security_group_egress_rule.app_out
+aws_vpc_security_group_ingress_rule.alb_from_internet["advisor"]
+aws_vpc_security_group_ingress_rule.alb_from_internet["weather"]
+aws_vpc_security_group_ingress_rule.app_from_alb
+=== TERRAFORM GRAPH ===
+  "aws_launch_template.tier" [label="aws_launch_template.tier"];
+  "aws_lb.main" [label="aws_lb.main"];
+  "aws_autoscaling_group.tier" -> "aws_launch_template.tier";
+  "aws_launch_template.tier" -> "data.aws_ami.al2023";
+  "aws_launch_template.tier" -> "aws_dynamodb_table.weather";
+  "aws_launch_template.tier" -> "aws_iam_instance_profile.tier";
+  "aws_launch_template.tier" -> "aws_lb.main";
+  "aws_launch_template.tier" -> "aws_security_group.app";
+  "aws_launch_template.tier" -> "aws_ssm_parameter.gemini";
+  "aws_lb.main" -> "data.aws_subnets.default";
+  "aws_lb.main" -> "aws_security_group.alb";
+  "aws_lb_listener.tier" -> "aws_lb.main";

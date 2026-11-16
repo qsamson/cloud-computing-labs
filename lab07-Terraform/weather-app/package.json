@@ -1,0 +1,10 @@
+{
+  "name": "weather-app",
+  "version": "1.0.0",
+  "main": "app.js",
+  "dependencies": {
+    "@aws-sdk/client-dynamodb": "^3.600.0",
+    "@aws-sdk/lib-dynamodb": "^3.600.0",
+    "express": "^4.19.2"
+  }
+}

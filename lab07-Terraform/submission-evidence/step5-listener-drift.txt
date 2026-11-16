@@ -1,0 +1,109 @@
+=== STEP 5: DELETE ADVISOR LISTENER ===
+advisor page after manual delete: 200
+=== TERRAFORM DETECTS MISSING LISTENER ===
+    }
+
+Plan: 1 to add, 0 to change, 0 to destroy.
+
+─────────────────────────────────────────────────────────────────────────────
+
+Note: You didn't use the -out option to save this plan, so Terraform can't
+guarantee to take exactly these actions if you run "terraform apply" now.
+=== TERRAFORM REPAIRS LISTENER ===
+[0m[1mdata.aws_vpc.default: Reading...[0m[0m
+[0m[1mdata.aws_iam_policy_document.ec2_trust: Reading...[0m[0m
+[0m[1mdata.aws_ami.al2023: Reading...[0m[0m
+[0m[1maws_dynamodb_table.weather: Refreshing state... [id=itmo-444-544-lab07-weather-lookups][0m
+[0m[1maws_ssm_parameter.gemini: Refreshing state... [id=/itmo-444-544-lab07/gemini-api-key][0m
+[0m[1mdata.aws_iam_policy_document.ec2_trust: Read complete after 0s [id=2851119427][0m
+[0m[1maws_iam_role.tier["advisor"]: Refreshing state... [id=itmo-444-544-lab07-advisor-role][0m
+[0m[1maws_iam_role.tier["weather"]: Refreshing state... [id=itmo-444-544-lab07-weather-role][0m
+[0m[1mdata.aws_iam_policy_document.advisor: Reading...[0m[0m
+[0m[1mdata.aws_iam_policy_document.advisor: Read complete after 0s [id=1343832075][0m
+[0m[1mdata.aws_iam_policy_document.weather: Reading...[0m[0m
+[0m[1mdata.aws_iam_policy_document.weather: Read complete after 0s [id=301016558][0m
+[0m[1maws_iam_instance_profile.tier["advisor"]: Refreshing state... [id=itmo-444-544-lab07-advisor-profile][0m
+[0m[1maws_iam_instance_profile.tier["weather"]: Refreshing state... [id=itmo-444-544-lab07-weather-profile][0m
+[0m[1maws_iam_role_policy.weather: Refreshing state... [id=itmo-444-544-lab07-weather-role:itmo-444-544-lab07-weather-policy][0m
+[0m[1maws_iam_role_policy.advisor: Refreshing state... [id=itmo-444-544-lab07-advisor-role:itmo-444-544-lab07-advisor-policy][0m
+[0m[1mdata.aws_vpc.default: Read complete after 0s [id=vpc-0ccaebc142e801b28][0m
+[0m[1mdata.aws_subnets.default: Reading...[0m[0m
+[0m[1maws_security_group.app: Refreshing state... [id=sg-0fd3756abbe9636a9][0m
+[0m[1maws_security_group.alb: Refreshing state... [id=sg-03d8a66ba9de7ae3c][0m
+[0m[1maws_lb_target_group.tier["weather"]: Refreshing state... [id=arn:aws:elasticloadbalancing:us-east-2:470044069234:targetgroup/itmo-444-544-lab07-weather-tg/36cee381fab28d27][0m
+[0m[1maws_lb_target_group.tier["advisor"]: Refreshing state... [id=arn:aws:elasticloadbalancing:us-east-2:470044069234:targetgroup/itmo-444-544-lab07-advisor-tg/d640768ce520f248][0m
+[0m[1mdata.aws_subnets.default: Read complete after 0s [id=us-east-2][0m
+[0m[1maws_vpc_security_group_egress_rule.app_out: Refreshing state... [id=sgr-054ec365af53201bb][0m
+[0m[1mdata.aws_ami.al2023: Read complete after 0s [id=ami-04f3a1f74e68b4cae][0m
+[0m[1maws_vpc_security_group_ingress_rule.app_from_alb: Refreshing state... [id=sgr-0e8b53f9232b9dab0][0m
+[0m[1maws_vpc_security_group_egress_rule.alb_to_app: Refreshing state... [id=sgr-0f3645e9e39c434f6][0m
+[0m[1maws_vpc_security_group_ingress_rule.alb_from_internet["advisor"]: Refreshing state... [id=sgr-0b42e59c48b34ce0f][0m
+[0m[1maws_vpc_security_group_ingress_rule.alb_from_internet["weather"]: Refreshing state... [id=sgr-00b447c18aeb17a8a][0m
+[0m[1maws_lb.main: Refreshing state... [id=arn:aws:elasticloadbalancing:us-east-2:470044069234:loadbalancer/app/itmo-444-544-lab07-alb/16a99f068e2dfc42][0m
+[0m[1maws_lb_listener.tier["advisor"]: Refreshing state... [id=arn:aws:elasticloadbalancing:us-east-2:470044069234:listener/app/itmo-444-544-lab07-alb/16a99f068e2dfc42/5ae1bc1fcb9ffa0a][0m
+[0m[1maws_lb_listener.tier["weather"]: Refreshing state... [id=arn:aws:elasticloadbalancing:us-east-2:470044069234:listener/app/itmo-444-544-lab07-alb/16a99f068e2dfc42/6ef0597178e1fd51][0m
+[0m[1maws_launch_template.tier["advisor"]: Refreshing state... [id=lt-0c6cad097424be956][0m
+[0m[1maws_launch_template.tier["weather"]: Refreshing state... [id=lt-0a20ff96c998d4286][0m
+[0m[1maws_autoscaling_group.tier["advisor"]: Refreshing state... [id=itmo-444-544-lab07-advisor-asg][0m
+[0m[1maws_autoscaling_group.tier["weather"]: Refreshing state... [id=itmo-444-544-lab07-weather-asg][0m
+
+Terraform used the selected providers to generate the following execution
+plan. Resource actions are indicated with the following symbols:
+  [32m+[0m create[0m
+
+Terraform will perform the following actions:
+
+[1m  # aws_lb_listener.tier["advisor"][0m will be created
+[0m  [32m+[0m[0m resource "aws_lb_listener" "tier" {
+      [32m+[0m[0m arn                                                                   = (known after apply)
+      [32m+[0m[0m id                                                                    = (known after apply)
+      [32m+[0m[0m load_balancer_arn                                                     = "arn:aws:elasticloadbalancing:us-east-2:470044069234:loadbalancer/app/itmo-444-544-lab07-alb/16a99f068e2dfc42"
+      [32m+[0m[0m port                                                                  = 8081
+      [32m+[0m[0m protocol                                                              = "HTTP"
+      [32m+[0m[0m routing_http_request_x_amzn_mtls_clientcert_header_name               = (known after apply)
+      [32m+[0m[0m routing_http_request_x_amzn_mtls_clientcert_issuer_header_name        = (known after apply)
+      [32m+[0m[0m routing_http_request_x_amzn_mtls_clientcert_leaf_header_name          = (known after apply)
+      [32m+[0m[0m routing_http_request_x_amzn_mtls_clientcert_serial_number_header_name = (known after apply)
+      [32m+[0m[0m routing_http_request_x_amzn_mtls_clientcert_subject_header_name       = (known after apply)
+      [32m+[0m[0m routing_http_request_x_amzn_mtls_clientcert_validity_header_name      = (known after apply)
+      [32m+[0m[0m routing_http_request_x_amzn_tls_cipher_suite_header_name              = (known after apply)
+      [32m+[0m[0m routing_http_request_x_amzn_tls_version_header_name                   = (known after apply)
+      [32m+[0m[0m routing_http_response_access_control_allow_credentials_header_value   = (known after apply)
+      [32m+[0m[0m routing_http_response_access_control_allow_headers_header_value       = (known after apply)
+      [32m+[0m[0m routing_http_response_access_control_allow_methods_header_value       = (known after apply)
+      [32m+[0m[0m routing_http_response_access_control_allow_origin_header_value        = (known after apply)
+      [32m+[0m[0m routing_http_response_access_control_expose_headers_header_value      = (known after apply)
+      [32m+[0m[0m routing_http_response_access_control_max_age_header_value             = (known after apply)
+      [32m+[0m[0m routing_http_response_content_security_policy_header_value            = (known after apply)
+      [32m+[0m[0m routing_http_response_server_enabled                                  = (known after apply)
+      [32m+[0m[0m routing_http_response_strict_transport_security_header_value          = (known after apply)
+      [32m+[0m[0m routing_http_response_x_content_type_options_header_value             = (known after apply)
+      [32m+[0m[0m routing_http_response_x_frame_options_header_value                    = (known after apply)
+      [32m+[0m[0m ssl_policy                                                            = (known after apply)
+      [32m+[0m[0m tags_all                                                              = {
+          [32m+[0m[0m "Project" = "itmo-444-544-lab07"
+        }
+      [32m+[0m[0m tcp_idle_timeout_seconds                                              = (known after apply)
+
+      [32m+[0m[0m default_action {
+          [32m+[0m[0m order            = (known after apply)
+          [32m+[0m[0m target_group_arn = "arn:aws:elasticloadbalancing:us-east-2:470044069234:targetgroup/itmo-444-544-lab07-advisor-tg/d640768ce520f248"
+          [32m+[0m[0m type             = "forward"
+        }
+
+      [32m+[0m[0m mutual_authentication (known after apply)
+    }
+
+[1mPlan:[0m [0m1 to add, 0 to change, 0 to destroy.
+[0m[1maws_lb_listener.tier["advisor"]: Creating...[0m[0m
+[0m[1maws_lb_listener.tier["advisor"]: Creation complete after 0s [id=arn:aws:elasticloadbalancing:us-east-2:470044069234:listener/app/itmo-444-544-lab07-alb/16a99f068e2dfc42/ba782e466196603c][0m
+[0m[1m[32m
+Apply complete! Resources: 1 added, 0 changed, 0 destroyed.[0m
+[0m[1m[32m
+Outputs:
+
+[0madvisor_url = "http://itmo-444-544-lab07-alb-831410703.us-east-2.elb.amazonaws.com:8081"
+alb_dns_name = "itmo-444-544-lab07-alb-831410703.us-east-2.elb.amazonaws.com"
+gemini_parameter_name = "/itmo-444-544-lab07/gemini-api-key"
+weather_table_name = "itmo-444-544-lab07-weather-lookups"
+weather_url = "http://itmo-444-544-lab07-alb-831410703.us-east-2.elb.amazonaws.com:8080"

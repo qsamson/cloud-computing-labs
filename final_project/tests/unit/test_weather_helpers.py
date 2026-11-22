@@ -1,4 +1,4 @@
-"""Unit tests for Lab 06 IAM policy and user-data helpers."""
+"""Unit tests for final-project IAM policies and Python user-data."""
 
 from pathlib import Path
 
@@ -12,7 +12,6 @@ from stack.weather import (
 
 
 def settings(tmp_path: Path) -> Settings:
-    """Return a complete Lab 06 test configuration."""
     values = {
         "AWS_REGION": "us-east-2",
         "AMI_ID": "ami-test",
@@ -23,6 +22,9 @@ def settings(tmp_path: Path) -> Settings:
         "AZ_B": "us-east-2b",
         "ALB_NAME": "weather-alb",
         "ALB_SG_NAME": "weather-alb-sg",
+
+        # Legacy Lab06 values remain in Settings
+        # but are not used by the final stack.
         "DB_INSTANCE_ID": "weather-db",
         "DB_INSTANCE_CLASS": "db.t4g.micro",
         "DB_NAME": "weather",
@@ -30,23 +32,34 @@ def settings(tmp_path: Path) -> Settings:
         "DB_SG_NAME": "weather-db-sg",
         "DB_SUBNET_GROUP_NAME": "weather-db-subnets",
         "DB_PASSWORD_PARAM": "/lab/db-password",
+
         "CACHE_SECONDS": "600",
         "GEMINI_PARAM_NAME": "/lab/gemini-api-key",
         "GEMINI_MODEL": "gemini-test",
         "KEY_CACHE_SECONDS": "60",
         "CONTACT_EMAIL": "student@example.com",
+
+        "FACTS_TABLE": "test-weather-facts",
+        "ADVISOR_TABLE": "test-advisor",
+        "STALE_SECONDS": "21600",
+        "REPORT_TTL_SECONDS": "1800",
+        "DAILY_GEMINI_CAP": "50",
+        "EMAIL_LIMIT": "5",
+        "SES_FROM_EMAIL": "student@example.com",
+
         "WEATHER_ROLE_NAME": "weather-role",
         "WEATHER_PROFILE_NAME": "weather-profile",
         "WEATHER_LT_NAME": "weather-lt",
         "WEATHER_TG_NAME": "weather-tg",
         "WEATHER_ASG_NAME": "weather-asg",
-        "WEATHER_LISTENER_PORT": "8080",
+        "WEATHER_LISTENER_PORT": "8081",
+
         "ADVISOR_ROLE_NAME": "advisor-role",
         "ADVISOR_PROFILE_NAME": "advisor-profile",
         "ADVISOR_LT_NAME": "advisor-lt",
         "ADVISOR_TG_NAME": "advisor-tg",
         "ADVISOR_ASG_NAME": "advisor-asg",
-        "ADVISOR_LISTENER_PORT": "8081",
+        "ADVISOR_LISTENER_PORT": "8080",
     }
 
     return Settings.from_values(
@@ -55,40 +68,44 @@ def settings(tmp_path: Path) -> Settings:
     )
 
 
-def test_each_role_policy_mentions_only_its_secret(tmp_path):
-    """Each tier may read exactly one SSM parameter."""
+def test_tier_policies_are_least_privilege(tmp_path):
     s = settings(tmp_path)
     account = "123456789012"
 
     wp = weather_policy(s, account)
     ap = advisor_policy(s, account)
 
-    weather_resource = wp["Statement"][0]["Resource"]
-    advisor_resource = ap["Statement"][0]["Resource"]
+    weather_statement = wp["Statement"][0]
 
-    assert wp["Statement"][0]["Action"] == [
-        "ssm:GetParameter"
-    ]
-    assert ap["Statement"][0]["Action"] == [
-        "ssm:GetParameter"
+    assert weather_statement["Action"] == [
+        "dynamodb:GetItem",
+        "dynamodb:PutItem",
     ]
 
-    assert s.db_password_param in weather_resource
-    assert s.gemini_param_name not in weather_resource
+    assert s.facts_table in weather_statement["Resource"]
+    assert s.advisor_table not in weather_statement["Resource"]
 
-    assert s.gemini_param_name in advisor_resource
-    assert s.db_password_param not in advisor_resource
+    advisor_actions = {
+        action
+        for statement in ap["Statement"]
+        for action in statement["Action"]
+    }
+
+    assert "dynamodb:GetItem" in advisor_actions
+    assert "dynamodb:PutItem" in advisor_actions
+    assert "dynamodb:UpdateItem" in advisor_actions
+    assert "ssm:GetParameter" in advisor_actions
+    assert "ses:SendEmail" in advisor_actions
+
+    for statement in wp["Statement"] + ap["Statement"]:
+        assert statement["Resource"] != "*"
 
 
-def test_user_data_contains_required_addresses_but_no_password(
-    tmp_path,
-):
-    """Advisor gets ALB DNS and weather gets DB host, never DB password."""
+def test_user_data_is_python_not_bash(tmp_path):
     s = settings(tmp_path)
 
     weather = build_weather_user_data(
         s,
-        "database.example.internal",
         "console.log('weather');",
         '{"name":"weather"}',
     )
@@ -100,27 +117,21 @@ def test_user_data_contains_required_addresses_but_no_password(
         '{"name":"advisor"}',
     )
 
-    assert "database.example.internal" in weather
-    assert s.db_password_param in weather
+    assert weather.startswith("#!/usr/bin/env python3")
+    assert advisor.startswith("#!/usr/bin/env python3")
 
-    # The parameter NAME is allowed in user-data.
-    # The secret VALUE must never appear.
+    assert "#!/bin/bash" not in weather
+    assert "#!/bin/bash" not in advisor
+
     assert "super-secret-password" not in weather
-
-    assert "weather-alb.example.com" in advisor
-    assert (
-        f":{s.weather.listener_port}"
-        in advisor
-    )
+    assert "super-secret-password" not in advisor
 
 
 def test_generated_user_data_is_under_16_kb(tmp_path):
-    """Both launch-template user-data scripts stay below EC2's limit."""
     s = settings(tmp_path)
 
     weather = build_weather_user_data(
         s,
-        "database.internal",
         "console.log('weather');",
         '{"name":"weather"}',
     )

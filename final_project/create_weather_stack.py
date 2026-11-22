@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Create the Lab 06 Weather Advisor AWS stack."""
+"""Create the final Weather Advisor AWS stack."""
 
 from getpass import getpass
 
@@ -7,12 +7,11 @@ from botocore.exceptions import ClientError
 
 from stack.clients import AwsClients
 from stack.config import Settings
-from stack.database import error_code
-from stack.weather_stack import create_weather_stack
+from stack.final_resources import error_code
+from stack.final_stack import create_final_stack
 
 
 def main() -> None:
-    """Create all Lab 06 weather/advisor resources."""
     settings = Settings.from_file(".env")
     clients = AwsClients.create(settings.region)
 
@@ -35,9 +34,9 @@ def main() -> None:
                 "Gemini API key cannot be empty."
             )
 
-    print("Creating Weather Advisor stack...")
+    print("Creating final Weather Advisor stack...")
 
-    outputs = create_weather_stack(
+    outputs = create_final_stack(
         clients,
         settings,
         gemini_key=gemini_key,
@@ -48,12 +47,12 @@ def main() -> None:
     print()
     print("Stack created.")
     print(
-        "Weather:",
-        f"http://{dns}:{settings.weather.listener_port}/weather?zip=60616",
-    )
-    print(
         "Advisor:",
         f"http://{dns}:{settings.advisor.listener_port}/",
+    )
+    print(
+        "Weather:",
+        f"http://{dns}:{settings.weather.listener_port}/",
     )
 
 

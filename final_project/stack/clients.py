@@ -17,6 +17,8 @@ class AwsClients:
     autoscaling: object
     ssm: object
     rds: object
+    dynamodb: object
+    ses: object
     sts: object
 
     @classmethod
@@ -31,5 +33,7 @@ class AwsClients:
             autoscaling=session.client("autoscaling"),
             ssm=session.client("ssm"),
             rds=session.client("rds"),
+            dynamodb=session.client("dynamodb"),
+            ses=session.client("ses"),
             sts=session.client("sts"),
         )

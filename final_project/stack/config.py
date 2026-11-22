@@ -64,6 +64,14 @@ class Settings:
     gemini_model: str
     key_cache_seconds: int
     contact_email: str
+    facts_table: str
+    advisor_table: str
+    stale_seconds: int
+    report_ttl_seconds: int
+    daily_gemini_cap: int
+    email_limit: int
+    ses_from_email: str
+
 
     weather: Tier
     advisor: Tier
@@ -99,6 +107,13 @@ class Settings:
             "GEMINI_PARAM_NAME",
             "GEMINI_MODEL",
             "KEY_CACHE_SECONDS",
+            "FACTS_TABLE",
+            "ADVISOR_TABLE",
+            "STALE_SECONDS",
+            "REPORT_TTL_SECONDS",
+            "DAILY_GEMINI_CAP",
+            "EMAIL_LIMIT",
+            "SES_FROM_EMAIL",
             "CONTACT_EMAIL",
             "WEATHER_ROLE_NAME",
             "WEATHER_PROFILE_NAME",
@@ -158,6 +173,13 @@ class Settings:
             gemini_model=v["GEMINI_MODEL"],
             key_cache_seconds=int(v["KEY_CACHE_SECONDS"]),
             contact_email=v["CONTACT_EMAIL"],
+            facts_table=v["FACTS_TABLE"],
+            advisor_table=v["ADVISOR_TABLE"],
+            stale_seconds=int(v["STALE_SECONDS"]),
+            report_ttl_seconds=int(v["REPORT_TTL_SECONDS"]),
+            daily_gemini_cap=int(v["DAILY_GEMINI_CAP"]),
+            email_limit=int(v["EMAIL_LIMIT"]),
+            ses_from_email=v["SES_FROM_EMAIL"],
             weather=tier("WEATHER"),
             advisor=tier("ADVISOR"),
         )

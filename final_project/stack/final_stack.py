@@ -82,11 +82,6 @@ def create_final_stack(
         "item_key",
     )
 
-    ensure_email_identity(
-        clients.ses,
-        settings.ses_from_email,
-    )
-
     account_id = clients.sts.get_caller_identity()["Account"]
 
     ensure_role_and_profile(

@@ -19,8 +19,6 @@ const {
 
 const {
   SESClient,
-  GetIdentityVerificationAttributesCommand,
-  VerifyEmailIdentityCommand,
   SendEmailCommand,
 } = require('@aws-sdk/client-ses');
 
@@ -1734,41 +1732,6 @@ function validateForm(
 }
 
 
-async function emailVerificationStatus(
-  email
-) {
-  const result =
-    await ses.send(
-      new GetIdentityVerificationAttributesCommand({
-        Identities: [
-          email,
-        ],
-      })
-    );
-
-  const attributes =
-    result.VerificationAttributes ||
-    {};
-
-  const entry =
-    attributes[email];
-
-  return entry
-    ? entry.VerificationStatus
-    : 'NotStarted';
-}
-
-
-async function startEmailVerification(
-  email
-) {
-  await ses.send(
-    new VerifyEmailIdentityCommand({
-      EmailAddress:
-        email,
-    })
-  );
-}
 
 
 function plainTextReport(
@@ -2181,37 +2144,6 @@ app.post(
     }
 
     try {
-      const status =
-        await emailVerificationStatus(
-          email
-        );
-
-      if (
-        status !==
-        'Success'
-      ) {
-        await startEmailVerification(
-          email
-        );
-
-        return res.send(
-          page(
-            'Email verification required',
-            `
-<h1>Check your inbox</h1>
-<p>
-Before the report can be sent, AWS SES requires this address to be verified.
-A verification message has been requested for
-<strong>${escapeHtml(email)}</strong>.
-</p>
-<p>
-After verifying the address, return to the report and click the email button again.
-</p>
-`
-          )
-        );
-      }
-
       await sendReportEmail(
         email,
         report
@@ -2249,7 +2181,10 @@ The Weather Advisor report was accepted by Amazon SES for delivery to
             `
 <h1>Email could not be sent</h1>
 <p>
-The email service did not accept the request. Please try again later.
+The email service did not accept the request.
+</p>
+<p>
+<small>${escapeHtml(err.name || 'Error')}: ${escapeHtml(err.message || '')}</small>
 </p>
 `
           )

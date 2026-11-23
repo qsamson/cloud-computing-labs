@@ -648,13 +648,27 @@ def delete_target_group(elbv2, name: str) -> None:
             return
         raise
 
-    try:
-        elbv2.delete_target_group(
-            TargetGroupArn=result["TargetGroups"][0]["TargetGroupArn"]
-        )
-    except ClientError as exc:
-        if error_code(exc) != "TargetGroupNotFound":
-            raise
+    target_arn = result["TargetGroups"][0]["TargetGroupArn"]
+
+    for attempt in range(10):
+        try:
+            elbv2.delete_target_group(
+                TargetGroupArn=target_arn
+            )
+            return
+        except ClientError as exc:
+            code = error_code(exc)
+
+            if code == "TargetGroupNotFound":
+                return
+
+            if code != "ResourceInUse":
+                raise
+
+            if attempt == 9:
+                raise
+
+            time.sleep(5)
 
 
 def delete_launch_template(ec2, name: str) -> None:

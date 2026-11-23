@@ -21,6 +21,7 @@ const {
   SNSClient,
   SubscribeCommand,
   PublishCommand,
+  ListSubscriptionsByTopicCommand,
 } = require('@aws-sdk/client-sns');
 
 
@@ -1818,6 +1819,57 @@ function recipientKey(email) {
 }
 
 
+async function findSubscription(
+  email
+) {
+  let nextToken;
+  let pending = null;
+
+  do {
+    const response =
+      await sns.send(
+        new ListSubscriptionsByTopicCommand({
+          TopicArn:
+            SNS_TOPIC_ARN,
+
+          NextToken:
+            nextToken,
+        })
+      );
+
+    for (
+      const subscription of
+      response.Subscriptions || []
+    ) {
+      if (
+        subscription.Protocol ===
+          'email' &&
+        normalizeEmail(
+          subscription.Endpoint
+        ) ===
+          normalizeEmail(email)
+      ) {
+        if (
+          subscription.SubscriptionArn &&
+          subscription.SubscriptionArn !==
+            'PendingConfirmation'
+        ) {
+          return subscription;
+        }
+
+        pending =
+          subscription;
+      }
+    }
+
+    nextToken =
+      response.NextToken;
+  } while (nextToken);
+
+  return pending;
+}
+
+
 async function sendReportEmail(
   email,
   report
@@ -1831,36 +1883,50 @@ async function sendReportEmail(
   const key =
     recipientKey(email);
 
-  const subscription =
-    await sns.send(
-      new SubscribeCommand({
-        TopicArn:
-          SNS_TOPIC_ARN,
-
-        Protocol:
-          'email',
-
-        Endpoint:
-          email,
-
-        Attributes: {
-          FilterPolicy:
-            JSON.stringify({
-              recipient_key: [
-                key,
-              ],
-            }),
-        },
-
-        ReturnSubscriptionArn:
-          false,
-      })
+  const existing =
+    await findSubscription(
+      email
     );
 
   if (
-    subscription.SubscriptionArn ===
-    'pending confirmation'
+    existing &&
+    existing.SubscriptionArn &&
+    existing.SubscriptionArn !==
+      'PendingConfirmation'
   ) {
+    await sns.send(
+      new PublishCommand({
+        TopicArn:
+          SNS_TOPIC_ARN,
+
+        Subject:
+          'Weather Advisor Report ' +
+          report.date,
+
+        Message:
+          plainTextReport(
+            report
+          ),
+
+        MessageAttributes: {
+          recipient_key: {
+            DataType:
+              'String',
+
+            StringValue:
+              key,
+          },
+        },
+      })
+    );
+
+    return {
+      status:
+        'sent',
+    };
+  }
+
+  if (existing) {
     return {
       status:
         'pending',
@@ -1868,34 +1934,33 @@ async function sendReportEmail(
   }
 
   await sns.send(
-    new PublishCommand({
+    new SubscribeCommand({
       TopicArn:
         SNS_TOPIC_ARN,
 
-      Subject:
-        'Weather Advisor Report ' +
-        report.date,
+      Protocol:
+        'email',
 
-      Message:
-        plainTextReport(
-          report
-        ),
+      Endpoint:
+        email,
 
-      MessageAttributes: {
-        recipient_key: {
-          DataType:
-            'String',
-
-          StringValue:
-            key,
-        },
+      Attributes: {
+        FilterPolicy:
+          JSON.stringify({
+            recipient_key: [
+              key,
+            ],
+          }),
       },
+
+      ReturnSubscriptionArn:
+        false,
     })
   );
 
   return {
     status:
-      'sent',
+      'pending',
   };
 }
 

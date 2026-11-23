@@ -107,6 +107,7 @@ def advisor_policy(
                 "Action": [
                     "sns:Subscribe",
                     "sns:Publish",
+                    "sns:ListSubscriptionsByTopic",
                 ],
                 "Resource": sns_topic_arn(
                     settings.region,

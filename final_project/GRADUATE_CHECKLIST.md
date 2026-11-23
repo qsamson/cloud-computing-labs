@@ -1,34 +1,114 @@
-# Lab 06 - Graduate Python Checklist
+# Graduate Final Project Checklist — Weather Advisor
 
-## Python Implementation
+## Application
 
-This lab was implemented in Python using boto3 and builds on the Python infrastructure package from Lab 05. The database is created and deleted with `create_database.py` and `delete_database.py`, while the application infrastructure is created and deleted with `create_weather_stack.py` and `delete_weather_stack.py`.
+- [x] Public Advisor web form
+- [x] Date limited to the next seven days
+- [x] Five-digit US ZIP validation
+- [x] Clothing category selection
+- [x] Email address validation
+- [x] Morning period: 06:00-11:59 local time
+- [x] Night period: 18:00-23:59 local time
+- [x] Temperature
+- [x] Wind speed
+- [x] Visibility
+- [x] UV index
+- [x] Humidity
+- [x] Rain category: Heavy / Mild / No
+- [x] Snow category: Heavy / Mild / No
+- [x] Suggested road conditions
+- [x] Suggested dressing
+- [x] Suggested accessories
 
-The Python implementation creates the private PostgreSQL RDS database, database security group, DB subnet group, SSM SecureString password, IAM roles and instance profiles, least-privilege policies, ALB security group, target groups, Application Load Balancer, listeners, launch templates, and Auto Scaling Groups.
+## Weather Data
 
-The create operations are idempotent, and the delete operations tolerate resources that have already been removed. Configuration values are loaded from `.env` through the Python configuration module. Secrets are not stored in `.env`, source files, user-data, logs, or screenshots.
+- [x] Zippopotam.us converts ZIP to coordinates
+- [x] National Weather Service is the primary US forecast source
+- [x] Open-Meteo fills required weather-data gaps
+- [x] Morning and Night are evaluated in the ZIP location's timezone
+- [x] Weather facts are kept separate from Gemini advice
+- [x] Missing NWS values may fall back to Open-Meteo
+- [x] Missing values are not silently treated as zero
+- [x] Recent DynamoDB facts cache can be used when an upstream service fails
 
-## Test Results
+## Gemini
 
-- Unit tests with Moto: **9 passed**
-- Integration tests against real AWS: **7 passed**
-- Chaos tests: **2 passed**
-- `pytest -m "not integration and not chaos"`: **9 passed**
+- [x] Gemini API key stored in SSM Parameter Store
+- [x] Advisor tier alone may read the Gemini parameter
+- [x] Gemini receives weather facts and clothing category only
+- [x] Email address is never sent to Gemini
+- [x] Structured Morning/Night advice is validated
+- [x] Rule-based fallback is used when Gemini is unavailable
+- [x] Daily Gemini call cap stored atomically in DynamoDB
 
-The unit tests verify the required RDS configuration, database security-group rule, cleanup behavior, least-privilege IAM policies, ALB-first ordering, user-data contents and size, and idempotent creation.
+## Email
 
-The integration tests verify healthy target groups, PostgreSQL cache miss and hit behavior, saved history, ZIP-code error handling, advisor responses, ALB-only application access, private database access, and IAM policy simulation.
+- [x] Amazon SNS selected instead of SES
+- [x] One SNS topic created by the Python stack
+- [x] Recipient must confirm email subscription
+- [x] Recipient-specific filter policy prevents cross-recipient delivery
+- [x] Confirmed recipient receives the requested plain-text report
+- [x] Tested successfully with multiple email providers
+- [x] Per-visitor email request limit included
 
-The chaos tests verify that the weather service continues operating when PostgreSQL becomes unreachable and that the weather tier recovers after its EC2 instance is terminated.
+## DynamoDB
 
-## What Moto Could Not Prove
+- [x] Weather facts table
+- [x] Advisor saved-report / Gemini-counter table
+- [x] PAY_PER_REQUEST billing mode
+- [x] TTL enabled using `expires_at`
+- [x] Weather role accesses only the facts table
+- [x] Advisor role accesses only the Advisor table
 
-Moto was useful for testing the structure and behavior of the boto3 infrastructure code without creating real AWS resources. It proved that the database request used `db.t4g.micro`, 20 GB of storage, encryption, `BackupRetentionPeriod=0`, `MultiAZ=False`, and `PubliclyAccessible=False`. It also verified that the database security group allowed PostgreSQL port 5432 from the application security group rather than from a public CIDR range. Moto allowed the IAM policies, idempotent creation, cleanup behavior, launch-template data, and user-data size to be tested quickly.
+## AWS Infrastructure
 
-However, Moto could not prove several behaviors that depend on real AWS infrastructure. It could not prove that an RDS endpoint was actually private and unreachable from my computer, that the Application Load Balancer could route traffic to healthy EC2 targets, or that an Auto Scaling Group could replace a terminated instance. It also could not prove the real network behavior of security groups, the actual IAM Policy Simulator results, or that the weather application could make a verified TLS connection to the real RDS PostgreSQL service.
+- [x] Two application tiers
+- [x] Application Load Balancer
+- [x] Advisor listener on port 8080
+- [x] Weather listener on port 8081
+- [x] Separate target groups
+- [x] Separate Auto Scaling Groups
+- [x] Separate IAM roles and instance profiles
+- [x] Application instances accept port 3000 only from the ALB security group
+- [x] Public URL tested successfully
+- [x] Both `/health` endpoints returned HTTP 200
 
-The real AWS integration tests covered these gaps. The target-group test proved that both application tiers became healthy behind the ALB. The network tests proved that port 3000 on an application instance was not directly reachable and that the PostgreSQL endpoint could not be reached from my computer. The IAM simulator integration test proved that the weather role could read only the database password parameter and the advisor role could read only the Gemini key parameter. The weather, history, and cache tests proved that the application could communicate with the real PostgreSQL database. Finally, the chaos tests proved real failure and recovery behavior by removing database access and by terminating the weather EC2 instance and measuring its recovery.
+## Python Deployment
 
-## Python Compared with Bash
+- [x] All AWS deployment code is Python
+- [x] EC2 boot script is Python
+- [x] No `.sh` files remain
+- [x] No Bash user-data
+- [x] Weather and Advisor user-data remain below EC2's 16 KB limit
+- [x] Create script builds the complete stack
+- [x] Delete script removes the complete stack
+- [x] Target-group deletion retries while AWS finishes detaching listeners
+- [x] Cleanup tested successfully on the first retry-safe run
 
-The Python version required more code than the equivalent Bash commands, especially for creating the database, checking whether resources already existed, handling AWS exceptions, and waiting for resources to become available. Bash was shorter for simple AWS CLI commands, but it was also easier to hide failures with patterns such as redirecting errors or using `|| true`. Python made error handling more explicit because individual `ClientError` codes could be checked and only expected conditions could be ignored. Python was also much easier to test because the resource-creation functions could be called directly from pytest and Moto. This made it possible to verify configuration values, least-privilege policies, idempotency, cleanup, and generated user-data before deploying anything to real AWS. For this lab, Bash was shorter, but Python provided stronger testing, clearer error handling, and more reusable infrastructure code.
+## Testing Evidence
+
+- [x] `node --check weather-app/app.js`
+- [x] `node --check advisor-app/app.js`
+- [x] Offline pytest suite: **9 passed, 9 deselected**
+- [x] Advisor `/health`: HTTP 200
+- [x] Weather `/health`: HTTP 200
+- [x] Real Weather request returned Morning/Night facts
+- [x] Real Advisor report returned all ten required rows
+- [x] Gemini advice verified in live report
+- [x] SNS subscription confirmation verified
+- [x] Actual Weather Advisor report successfully delivered by SNS
+- [x] Public Advisor URL loaded successfully
+
+## Presentation Preparation
+
+For the live presentation:
+
+1. Run `python3 create_weather_stack.py`.
+2. Share the Advisor URL printed by the script.
+3. Allow classmates to submit reports for five minutes.
+4. Be ready to show IAM roles/policies and CloudTrail.
+5. Explain design changes and decisions.
+6. Run `python3 delete_weather_stack.py`.
+7. Show that the project resources were removed.
+
+The ALB DNS name changes after the stack is deleted and recreated, so always use the current URL printed by `create_weather_stack.py`.

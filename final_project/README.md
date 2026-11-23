@@ -1,131 +1,172 @@
-# Lab 05 — Infrastructure as Python with boto3 and pytest
+# Final Project — Weather Advisor Application
+
+Course: ITMO 544 Cloud Computing / Cloud Security
 
 ## Overview
 
-In this lab, the previous AWS Bash infrastructure was rewritten in Python using boto3. The project creates and manages the S3 bucket, IAM roles, launch templates, security groups, target groups, Application Load Balancer, listeners, and Auto Scaling Groups.
+Weather Advisor is a two-tier AWS application built with Python infrastructure code and Node.js Express services.
 
-Pytest was used for unit, integration, and chaos testing.
+Users enter:
+- a date within the next 7 days
+- a 5-digit US ZIP code
+- a clothing category
+- an email address
 
----
+The report shows Morning and Night values for temperature, wind, visibility, UV, humidity, rain, snow, road advice, dressing advice, and accessories.
 
-## Project Layout
+## Architecture
 
-The project contains:
+Advisor tier:
+- public form on ALB port 8080
+- validates user input
+- calls the Weather tier
+- reads Gemini key from SSM
+- generates and validates AI advice
+- stores short-lived reports and Gemini call counters in DynamoDB
+- handles SNS email delivery
 
-- `stack/` — Python infrastructure modules
-- `tests/unit/` — unit tests
-- `tests/integration/` — integration and chaos tests
-- `uploader-app/` — uploader application
-- `viewer-app/` — viewer application
-- `create_stack.py` — creates the AWS stack
-- `delete_stack.py` — removes the AWS stack
-- `pytest.ini` — pytest configuration
-- `requirements.txt` — Python dependencies
+Weather tier:
+- internal service on ALB port 8081
+- validates ZIP/date
+- converts ZIP to coordinates
+- calls weather APIs
+- normalizes Morning/Night data
+- derives Rain and Snow categories
+- caches facts in DynamoDB
 
-### Evidence
+## Data Sources
 
-![Project Layout](screenshots/01-project-layout.png)
+- Zippopotam.us: ZIP to coordinates
+- National Weather Service: primary US weather forecast source
+- Open-Meteo: visibility, UV, humidity, precipitation, snowfall, timezone, and supported fallback values
 
----
+Morning is 06:00-11:59 local time.
+Night is 18:00-23:59 local time.
 
-## Unit Tests
+Weather facts come from APIs and application code. Gemini is used only for advice.
 
-The complete unit-test suite successfully passed all 19 tests.
+## Gemini
 
-![19 Unit Tests Passed](screenshots/02-unit-tests-19-passed.png)
+The Gemini key is stored in SSM Parameter Store.
 
-### Break-It Experiment
+Only the Advisor tier may read the key.
 
-The uploader IAM policy was intentionally changed from:
+Gemini receives weather facts and the selected clothing category. The user's email address is never sent to Gemini.
 
-` s3:PutObject `
+Gemini returns structured advice for:
+- road conditions
+- dressing
+- accessories
 
-to:
+If Gemini fails or the daily call cap is reached, the application uses rule-based fallback advice.
 
-` s3:* `
+## Email
 
-The least-privilege test correctly detected the change and failed. The policy was then restored to `s3:PutObject`.
+Amazon SNS is used instead of SES.
 
-![Break-It Policy Test](screenshots/03-break-it-policy-failure.png)
+Flow:
+1. User clicks Email this report.
+2. SNS sends a subscription confirmation the first time.
+3. Recipient confirms the subscription.
+4. User clicks Email this report again.
+5. The report is delivered.
 
----
+Each subscription has a recipient-specific filter policy so one user's report is not delivered to another subscriber.
 
-## AWS Stack Deployment
+## DynamoDB
 
-The Python stack was deployed successfully using:
+Two PAY_PER_REQUEST tables are used:
+- Weather facts table
+- Advisor reports / Gemini counter table
 
-`python create_stack.py`
+TTL uses the `expires_at` attribute.
 
-Both the uploader and viewer endpoints were created through the Application Load Balancer.
+## Security
 
-![Create Stack](screenshots/04-create-stack-urls.png)
+Separate IAM roles are used for Weather and Advisor.
 
----
+Weather role:
+- required DynamoDB access to the Weather facts table only
 
-## Integration Tests
+Advisor role:
+- required DynamoDB access to the Advisor table
+- SSM GetParameter for the Gemini key
+- SNS Subscribe, Publish and ListSubscriptionsByTopic for the single project topic
 
-The deployed AWS infrastructure and applications were tested against the real AWS environment.
+Application port 3000 is reachable only from the ALB security group.
 
-All 14 integration tests passed.
+## Deployment
 
-![14 Integration Tests Passed](screenshots/05-integration-tests-14-passed.png)
+All deployment code is Python.
 
----
+There are no `.sh` files and no Bash user-data.
 
-## Chaos and Recovery Testing
+Create the stack:
 
-The recovery SLO was initially configured as 180 seconds.
+`python3 create_weather_stack.py`
 
-The measured recovery times were:
+Delete the stack:
 
-- Uploader: approximately 92.31 seconds
-- Viewer: approximately 83.26 seconds
+`python3 delete_weather_stack.py`
 
-Both tiers recovered within the required 180-second SLO.
+The ALB DNS changes after the stack is deleted and recreated.
 
-![Chaos Test Passed](screenshots/06-chaos-180s-passed.png)
+## Testing
 
-### Tightened SLO Experiment
+Latest offline test result:
 
-The recovery SLO was temporarily changed from 180 seconds to 60 seconds.
+`9 passed, 9 deselected`
 
-The measured recovery times were:
+Live AWS tests completed successfully:
+- Advisor health returned HTTP 200
+- Weather health returned HTTP 200
+- public form returned HTTP 200
+- weather request returned Morning and Night facts
+- report contained all ten required rows
+- live report used Gemini advice
+- SNS confirmation email arrived
+- confirmed recipient received the actual Weather Advisor report
+- delete script completed successfully
+- stack recreated successfully
 
-- Uploader: approximately 87.86 seconds
-- Viewer: approximately 81.36 seconds
+## Cost Control
 
-Both tests failed as expected because their recovery times exceeded the 60-second SLO. The SLO was then restored to 180 seconds.
+The project uses:
+- two small EC2 instances
+- one ALB
+- DynamoDB PAY_PER_REQUEST
+- SSM standard parameter
+- SNS email
+- Gemini free-tier usage with a daily call cap
 
-![Chaos Test Failed at 60 Seconds](screenshots/07-chaos-60s-failed.png)
+The stack is deleted when testing is complete.
 
----
+## Presentation
 
-## Cleanup
+1. Run `python3 create_weather_stack.py`.
+2. Share the Advisor URL.
+3. Allow classmates to test the form.
+4. Show IAM and CloudTrail if requested.
+5. Present design decisions and differences from earlier course work.
+6. Run `python3 delete_weather_stack.py`.
+7. Show that the project resources were removed.
 
-The AWS stack was removed using:
+## Main Files
 
-`python delete_stack.py`
+- `advisor-app/`
+- `weather-app/`
+- `stack/`
+- `tests/`
+- `testing/`
+- `create_weather_stack.py`
+- `delete_weather_stack.py`
+- `GRADUATE_CHECKLIST.md`
+- `README.md`
 
-The cleanup command was run a second time to verify that cleanup was safe to repeat.
+## Reflection
 
-Final AWS checks confirmed that the lab load balancer, Auto Scaling Groups, and IAM roles were removed.
+The final design moved away from the older RDS-centered implementation and uses DynamoDB for short-lived application state. This works better with replaceable Auto Scaling instances.
 
-![Cleanup](screenshots/08-cleanup-twice.png)
+SNS was selected instead of SES because SNS supports explicit recipient confirmation without requiring SES production access for arbitrary classroom recipients.
 
----
-
-## What Moto Proved and Its Limitations
-
-Moto proved that my Python code could create, configure, and delete AWS resources correctly in a simulated AWS environment. It also helped verify that the create process was repeatable and that cleanup could be run more than once. However, Moto could not prove that real EC2 instances would boot correctly, that the applications would respond over HTTP, or that IAM permissions would behave exactly the same in real AWS. The integration and chaos tests covered these gaps by testing the deployed AWS infrastructure, application behavior, IAM permissions, target health, and recovery after an instance failure.
-
----
-
-## `ignore_errors("EntityAlreadyExists")` vs. `2>/dev/null || true`
-
-`ignore_errors("EntityAlreadyExists")` ignores only the specific AWS error that is expected and allows other unexpected errors to be raised. In comparison, `2>/dev/null || true` can hide every error, including permission problems, incorrect commands, or other failures. The Python approach therefore provides better error handling because expected errors can be ignored without hiding real problems.
-
----
-
-## Challenge 5 — Reflection
-
-The Bash version was shorter when handling AWS commands that might fail because it could simply use commands such as `2>/dev/null || true`. The Python version required more lines, but those extra lines provided clearer error handling, better testing, and more control over which failures should be ignored and which should stop the program.
+The system keeps weather facts, derived categories and AI advice separate. APIs provide facts, application code derives categories, and Gemini provides advice only.

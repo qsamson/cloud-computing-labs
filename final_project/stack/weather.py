@@ -20,14 +20,14 @@ def parameter_arn(
     )
 
 
-def ses_identity_arn(
+def sns_topic_arn(
     region: str,
     account_id: str,
-    email: str,
+    topic_name: str,
 ) -> str:
     return (
-        f"arn:aws:ses:{region}:{account_id}:"
-        f"identity/{email}"
+        f"arn:aws:sns:{region}:{account_id}:"
+        f"{topic_name}"
     )
 
 
@@ -105,12 +105,13 @@ def advisor_policy(
             {
                 "Effect": "Allow",
                 "Action": [
-                    "ses:SendEmail",
+                    "sns:Subscribe",
+                    "sns:Publish",
                 ],
-                "Resource": ses_identity_arn(
+                "Resource": sns_topic_arn(
                     settings.region,
                     account_id,
-                    settings.ses_from_email,
+                    settings.sns_topic_name,
                 ),
             },
         ],
@@ -143,6 +144,7 @@ def build_weather_user_data(
 def build_advisor_user_data(
     settings: Settings,
     alb_dns_name: str,
+    topic_arn: str,
     app_js: str,
     package_json: str,
 ) -> str:
@@ -166,7 +168,7 @@ def build_advisor_user_data(
             "REPORT_TTL_SECONDS": settings.report_ttl_seconds,
             "DAILY_GEMINI_CAP": settings.daily_gemini_cap,
             "EMAIL_LIMIT": settings.email_limit,
-            "SES_FROM_EMAIL": settings.ses_from_email,
+            "SNS_TOPIC_ARN": topic_arn,
         },
     )
 

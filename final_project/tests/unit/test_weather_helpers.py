@@ -46,6 +46,7 @@ def settings(tmp_path: Path) -> Settings:
         "DAILY_GEMINI_CAP": "50",
         "EMAIL_LIMIT": "5",
         "SES_FROM_EMAIL": "student@example.com",
+        "SNS_TOPIC_NAME": "test-weather-email",
 
         "WEATHER_ROLE_NAME": "weather-role",
         "WEATHER_PROFILE_NAME": "weather-profile",
@@ -95,7 +96,8 @@ def test_tier_policies_are_least_privilege(tmp_path):
     assert "dynamodb:PutItem" in advisor_actions
     assert "dynamodb:UpdateItem" in advisor_actions
     assert "ssm:GetParameter" in advisor_actions
-    assert "ses:SendEmail" in advisor_actions
+    assert "sns:Subscribe" in advisor_actions
+    assert "sns:Publish" in advisor_actions
 
     for statement in wp["Statement"] + ap["Statement"]:
         assert statement["Resource"] != "*"
@@ -113,6 +115,7 @@ def test_user_data_is_python_not_bash(tmp_path):
     advisor = build_advisor_user_data(
         s,
         "weather-alb.example.com",
+        "arn:aws:sns:us-east-2:123456789012:test-weather-email",
         "console.log('advisor');",
         '{"name":"advisor"}',
     )
@@ -139,6 +142,7 @@ def test_generated_user_data_is_under_16_kb(tmp_path):
     advisor = build_advisor_user_data(
         s,
         "alb.example.com",
+        "arn:aws:sns:us-east-2:123456789012:test-weather-email",
         "console.log('advisor');",
         '{"name":"advisor"}',
     )

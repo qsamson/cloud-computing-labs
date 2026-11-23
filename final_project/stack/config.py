@@ -71,6 +71,7 @@ class Settings:
     daily_gemini_cap: int
     email_limit: int
     ses_from_email: str
+    sns_topic_name: str
 
 
     weather: Tier
@@ -114,6 +115,7 @@ class Settings:
             "DAILY_GEMINI_CAP",
             "EMAIL_LIMIT",
             "SES_FROM_EMAIL",
+            "SNS_TOPIC_NAME",
             "CONTACT_EMAIL",
             "WEATHER_ROLE_NAME",
             "WEATHER_PROFILE_NAME",
@@ -180,6 +182,7 @@ class Settings:
             daily_gemini_cap=int(v["DAILY_GEMINI_CAP"]),
             email_limit=int(v["EMAIL_LIMIT"]),
             ses_from_email=v["SES_FROM_EMAIL"],
+            sns_topic_name=v["SNS_TOPIC_NAME"],
             weather=tier("WEATHER"),
             advisor=tier("ADVISOR"),
         )

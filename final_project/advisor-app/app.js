@@ -18,9 +18,10 @@ const {
 } = require('@aws-sdk/lib-dynamodb');
 
 const {
-  SESClient,
-  SendEmailCommand,
-} = require('@aws-sdk/client-ses');
+  SNSClient,
+  SubscribeCommand,
+  PublishCommand,
+} = require('@aws-sdk/client-sns');
 
 
 const app = express();
@@ -75,8 +76,8 @@ const DAILY_GEMINI_CAP =
     100
   );
 
-const SES_FROM_EMAIL =
-  process.env.SES_FROM_EMAIL ||
+const SNS_TOPIC_ARN =
+  process.env.SNS_TOPIC_ARN ||
   '';
 
 const EMAIL_LIMIT =
@@ -92,8 +93,8 @@ const ssm =
       process.env.AWS_REGION,
   });
 
-const ses =
-  new SESClient({
+const sns =
+  new SNSClient({
     region:
       process.env.AWS_REGION,
   });
@@ -1806,47 +1807,96 @@ function plainTextReport(
 }
 
 
+function recipientKey(email) {
+  return crypto
+    .createHash('sha256')
+    .update(
+      normalizeEmail(email)
+    )
+    .digest('hex')
+    .slice(0, 32);
+}
+
+
 async function sendReportEmail(
   email,
   report
 ) {
-  if (
-    !SES_FROM_EMAIL
-  ) {
+  if (!SNS_TOPIC_ARN) {
     throw new Error(
-      'SES_FROM_EMAIL_not_configured'
+      'SNS_TOPIC_ARN_not_configured'
     );
   }
 
-  await ses.send(
-    new SendEmailCommand({
-      Source:
-        SES_FROM_EMAIL,
+  const key =
+    recipientKey(email);
 
-      Destination: {
-        ToAddresses: [
+  const subscription =
+    await sns.send(
+      new SubscribeCommand({
+        TopicArn:
+          SNS_TOPIC_ARN,
+
+        Protocol:
+          'email',
+
+        Endpoint:
           email,
-        ],
-      },
 
-      Message: {
-        Subject: {
-          Data:
-            'Weather Advisor Report for ' +
-            report.date,
+        Attributes: {
+          FilterPolicy:
+            JSON.stringify({
+              recipient_key: [
+                key,
+              ],
+            }),
         },
 
-        Body: {
-          Text: {
-            Data:
-              plainTextReport(
-                report
-              ),
-          },
+        ReturnSubscriptionArn:
+          false,
+      })
+    );
+
+  if (
+    subscription.SubscriptionArn ===
+    'pending confirmation'
+  ) {
+    return {
+      status:
+        'pending',
+    };
+  }
+
+  await sns.send(
+    new PublishCommand({
+      TopicArn:
+        SNS_TOPIC_ARN,
+
+      Subject:
+        'Weather Advisor Report ' +
+        report.date,
+
+      Message:
+        plainTextReport(
+          report
+        ),
+
+      MessageAttributes: {
+        recipient_key: {
+          DataType:
+            'String',
+
+          StringValue:
+            key,
         },
       },
     })
   );
+
+  return {
+    status:
+      'sent',
+  };
 }
 
 
@@ -2144,18 +2194,43 @@ app.post(
     }
 
     try {
-      await sendReportEmail(
-        email,
-        report
-      );
+      const delivery =
+        await sendReportEmail(
+          email,
+          report
+        );
+
+      if (
+        delivery.status ===
+        'pending'
+      ) {
+        return res.send(
+          page(
+            'Confirm email subscription',
+            `
+<h1>Check your inbox</h1>
+<p>
+Amazon SNS sent a confirmation message to
+<strong>${escapeHtml(email)}</strong>.
+</p>
+<p>
+Click the confirmation link in that email, then return to your report and click the email button again.
+</p>
+<p>
+This confirmation is required before Weather Advisor can send reports to that address.
+</p>
+`
+          )
+        );
+      }
 
       return res.send(
         page(
           'Report sent',
           `
-<h1>Report accepted for delivery</h1>
+<h1>Report sent</h1>
 <p>
-The Weather Advisor report was accepted by Amazon SES for delivery to
+The Weather Advisor report was published only to the confirmed subscription for
 <strong>${escapeHtml(email)}</strong>.
 </p>
 <p>

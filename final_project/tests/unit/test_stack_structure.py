@@ -50,6 +50,7 @@ def make_settings(tmp_path: Path) -> Settings:
         "DAILY_GEMINI_CAP": "50",
         "EMAIL_LIMIT": "5",
         "SES_FROM_EMAIL": "student@example.com",
+        "SNS_TOPIC_NAME": "test-weather-email",
         "WEATHER_ROLE_NAME": "test-weather-role",
         "WEATHER_PROFILE_NAME": "test-weather-profile",
         "WEATHER_LT_NAME": "test-weather-lt",

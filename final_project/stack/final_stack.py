@@ -6,7 +6,7 @@ from pathlib import Path
 
 from .config import Settings
 from .database import find_default_vpc, find_subnet
-from .final_resources import ensure_table, delete_table
+from .final_resources import ensure_table, delete_table, ensure_topic, delete_topic
 from .weather import (
     build_advisor_user_data,
     build_weather_user_data,
@@ -80,6 +80,11 @@ def create_final_stack(
         clients.dynamodb,
         settings.advisor_table,
         "item_key",
+    )
+
+    topic_arn = ensure_topic(
+        clients.sns,
+        settings.sns_topic_name,
     )
 
     account_id = clients.sts.get_caller_identity()["Account"]
@@ -182,6 +187,7 @@ def create_final_stack(
     advisor_ud = build_advisor_user_data(
         settings,
         alb_dns_name,
+        topic_arn,
         advisor_js,
         advisor_pkg,
     )
@@ -249,6 +255,7 @@ def create_final_stack(
         "ADVISOR_TG_ARN": advisor_tg_arn,
         "FACTS_TABLE": settings.facts_table,
         "ADVISOR_TABLE": settings.advisor_table,
+        "SNS_TOPIC_ARN": topic_arn,
     }
 
     Path(stack_outputs_path).write_text(
@@ -354,6 +361,11 @@ def delete_final_stack(
     delete_table(
         clients.dynamodb,
         settings.advisor_table,
+    )
+
+    delete_topic(
+        clients.sns,
+        values.get("SNS_TOPIC_ARN"),
     )
 
     path.unlink(

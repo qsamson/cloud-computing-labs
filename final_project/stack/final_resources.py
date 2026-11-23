@@ -72,3 +72,28 @@ def table_arn(
         f"arn:aws:dynamodb:{region}:"
         f"{account_id}:table/{table_name}"
     )
+
+
+def ensure_topic(sns, name: str) -> str:
+    """Create or return the single Weather Advisor SNS topic."""
+    response = sns.create_topic(
+        Name=name
+    )
+    return response["TopicArn"]
+
+
+def delete_topic(sns, topic_arn: str | None) -> None:
+    """Delete the SNS topic when it exists."""
+    if not topic_arn:
+        return
+
+    try:
+        sns.delete_topic(
+            TopicArn=topic_arn
+        )
+    except ClientError as exc:
+        if error_code(exc) not in {
+            "NotFound",
+            "NotFoundException",
+        }:
+            raise
